@@ -1,6 +1,5 @@
 package com.example.bottomsheet;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -15,18 +14,15 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Window;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
-import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.firebase.database.DataSnapshot;
@@ -34,7 +30,6 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-import com.google.firebase.storage.FileDownloadTask;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
@@ -44,22 +39,20 @@ import com.theartofdev.edmodo.cropper.CropImageView;
 import java.io.File;
 import java.io.IOException;
 
-import de.hdodenhof.circleimageview.CircleImageView;
+
+public class MainActivity extends AppCompatActivity {  //main activity
 
 
-public class MainActivity extends AppCompatActivity {
 
-
-    Button  updateUserProfile;
-    LinearLayout camera,gallery;
+    private LinearLayout camera,gallery;
     private Uri imageUri,cameraImgUri,downloadUrl;
     private TextView ImageUser;
     private String currentPhotoPath;
     private ImageView userFullProfile ;
     private ImageView userProfile1,showImage;
-    public StorageReference mStorageRef;
-    FirebaseDatabase database;
-    DatabaseReference myRef;
+    private StorageReference mStorageRef;
+    private FirebaseDatabase database;
+    private DatabaseReference myRef;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,6 +62,10 @@ public class MainActivity extends AppCompatActivity {
         //Firebase Storage Reference
          database = FirebaseDatabase.getInstance();
          myRef = database.getReference("ImageUrl");
+         ImageUser=findViewById(R.id.profile_image);
+         showImage = findViewById(R.id.profileUser);
+
+         //----------------------------------------------------------------------------------------
 
         myRef.addValueEventListener(new ValueEventListener() {
             @Override
@@ -77,7 +74,6 @@ public class MainActivity extends AppCompatActivity {
                 // whenever data at this location is updated.
 
                 downloadUrl = Uri.parse(dataSnapshot.child("url").getValue(String.class));
-
                 userProfile1 = findViewById(R.id.profileUser);
 
                 Glide
@@ -90,12 +86,11 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onCancelled(DatabaseError error) {
                 // Failed to read value
+                Toast.makeText(MainActivity.this, "Unable to fetch data from firebase", Toast.LENGTH_SHORT).show();
                 }
         });
 
-        //Hooks
-        ImageUser=findViewById(R.id.profile_image);
-        showImage = findViewById(R.id.profileUser);
+       //-------------------------------------------------------------------------
 
         showImage.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -104,15 +99,22 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        //-------------------------------------------------------------------------
+
+        //Permission for camera
+
         if (ContextCompat.checkSelfPermission(MainActivity.this,
                 Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED){
 
-            ActivityCompat.requestPermissions(MainActivity.this,
+                ActivityCompat.requestPermissions(MainActivity.this,
                     new String[]{
                             Manifest.permission.CAMERA
                     },
                     100);
         }
+
+
+        //---------------------------------------------------------------------------
 
         //Task for update image
 
@@ -121,13 +123,16 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
                 showBottomSheet();
                }  //onClick of button
-
-
         });
 
+        //-----------------------------------------------------------------------------------------
 
 
-    }
+    }  //OnCreate Method
+
+    //***************************************OUTSIDE OF ON CREATE METHOD***********************************
+
+    //---------------------------------------------------------------------------------------------
 
     //Method for displaying profile
 
@@ -149,6 +154,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    //----------------------------------------------------------------------------------------------
 
     //Method to show bottom sheet
 
@@ -215,6 +221,7 @@ public class MainActivity extends AppCompatActivity {
     }   //BottomSheet
 
 
+    //----------------------------------------------------------------------------------------------
 
     //Method for taking picture from camera
 
@@ -226,24 +233,19 @@ public class MainActivity extends AppCompatActivity {
 
         try {
             File imageFile= File.createTempFile(fileName,".jpeg",storageDirectory);
-
             currentPhotoPath = imageFile.getAbsolutePath();
-
             Uri imgUri = FileProvider.getUriForFile(MainActivity.this,"com.example.bottomsheet.fileprovider",imageFile);
-
-
             Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
             intent.putExtra(MediaStore.EXTRA_OUTPUT,imgUri);
             startActivityForResult(intent, 100);
-
 
         } catch (IOException e) {
             e.printStackTrace();
         }
 
+    } //Camera Photo
 
-
-    }
+    //-------------------------------------------------------------------------------------------
 
     //Method for choosing the picture from gallery
 
@@ -255,7 +257,9 @@ public class MainActivity extends AppCompatActivity {
         intent.setAction(Intent.ACTION_GET_CONTENT);
         startActivityForResult(intent, 1);
 
-    }
+    } //Choose Picture
+
+    //--------------------------------------------------------------------------------------------
 
 //When User will inside the gallery folder
 
@@ -272,7 +276,6 @@ public class MainActivity extends AppCompatActivity {
                     .setCropShape(CropImageView.CropShape.RECTANGLE)
                     .setFixAspectRatio(true)
                     .start(this);
-
 
         }
 
@@ -292,8 +295,6 @@ public class MainActivity extends AppCompatActivity {
                     .setFixAspectRatio(true)
                     .start(this);
         }
-
-
 
         //After image will crop again taking the image uri
 
@@ -316,20 +317,18 @@ public class MainActivity extends AppCompatActivity {
 
     }  //method
 
+//--------------------------------------------------------------------------------------------------
 
     //Update Image
 
     private  void UpdateImage(Uri profileUri) {
 
-
         //Firebase Storage Reference
 
         database = FirebaseDatabase.getInstance();
         myRef = database.getReference("ImageUrl");
-
         mStorageRef = FirebaseStorage.getInstance().getReference("images/");
         final StorageReference riversRef = mStorageRef.child("Anurag123@");
-
 
         riversRef.putFile(profileUri)
                 .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
@@ -341,9 +340,9 @@ public class MainActivity extends AppCompatActivity {
                             @Override
                             public void onSuccess(Uri uri) {
 
+                                //Setting the url to database
+
                                 myRef.child("url").setValue(uri.toString());
-
-
                                 Toast.makeText(MainActivity.this, "Image Updated Successfully", Toast.LENGTH_SHORT).show();
 
                             }
@@ -352,8 +351,7 @@ public class MainActivity extends AppCompatActivity {
                     }
 
                 });
-    }
 
-
+    }  //UpdateImage
 
 }  //class
